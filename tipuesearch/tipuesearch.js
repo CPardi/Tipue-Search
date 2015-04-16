@@ -33,6 +33,7 @@
 
         return this.each(function() {
 
+            var selectFromAuto = false;
             var tipuesearch_in = {
                 pages: []
             };
@@ -51,6 +52,7 @@
                 $("#tipue_search_input").autocomplete({
                     delay: 0,
                     source: autoNames,
+                    minLength: set.minimumLength,
                     select: function (event, ui) {
                         window.location.href = ui.item.url;
                     }
@@ -96,7 +98,9 @@
                 $("#tipue_search_input").catcomplete({
                     delay: 0,
                     source: autoNames,
+                    minLength: set.minimumLength,
                     select: function (event, ui) {
+                        this.selectFromAuto = true;
                         window.location.href = ui.item.url;
                     }
                 });
@@ -179,7 +183,8 @@
 
             $(this).keyup(function(event)
             {
-                if(event.keyCode == '13')
+                /* Only get search results if an auto completion has not been clicked. */
+                if( !this.selectFromAuto && event.keyCode == '13')
                 {
                     getTipueSearch(0, true);
                 }
