@@ -15,6 +15,8 @@ Two additional options have been added:
 
 If `autocomplete : true`, then the jquery ui auto-complete widget and all its dependencies must be referenced.
 
+An extra demo has been added to the project to show the new feature.
+
 Documentation
 -------------
 
