@@ -13,8 +13,13 @@
 
         var set = $.extend( {
 
-            'autocomplete'           : false,
-            'categorized'            : false,
+            'autocomplete'           : {
+                'autofocus'     : false,
+                'categorized'   : false,
+                'delay'         : 0,
+                'position'      : { my: "left top", at: "left bottom", collision: "none" },
+                'minimumLength' : 1
+            },
             'show'                   : 7,
             'newWindow'              : false,
             'showURL'                : true,
@@ -43,67 +48,70 @@
             var tipuesearch_t_c = 0;
 
             /* Add a uncategorized autocomplete, if needed. */
-            if(set.autocomplete && !set.categorized) {
+            if(set.autocomplete !== false) {
 
                 /* Convert the Tipue Json into a Jquery Json. */
                 var autoNames = toJqueryUiJson();
 
-                /* Add the auto-completion to the tipue_search_input. */
-                $("#tipue_search_input").autocomplete({
-                    delay: 0,
-                    source: autoNames,
-                    minLength: set.minimumLength,
-                    select: function (event, ui) {
-                        window.location.href = ui.item.url;
-                    }
-                });
-            }
+                if(!set.autocomplete.categorized) {
+                    /* Add the auto-completion to the tipue_search_input. */
+                    $("#tipue_search_input").autocomplete({
+                        /* User specified parameters.*/
+                        delay: set.autocomplete.delay,
+                        autofocus: set.autocomplete.autofocus,
+                        minLength: set.autocomplete.minimumLength,
+                        position: set.autocomplete.position,
+                        /*Source and item URL given from Json input.*/
+                        source: autoNames,
+                        select: function (event, ui) {
+                            window.location.href = ui.item.url;
+                        }
+                    });
+                } else {
+                    /* Make the standard auto-complete have categories, as given on the Jquery UI website. */
+                    $.widget("custom.catcomplete", $.ui.autocomplete, {
+                        _create: function () {
+                            this._super();
+                            this.widget().menu("option", "items", "> :not(.ui-autocomplete-category)");
+                        },
+                        _renderMenu: function (ul, items) {
+                            var that = this,
+                                currentCategory = "";
+                            $.each(items, function (index, item) {
+                                var li;
+                                if (item.category != currentCategory) {
+                                    ul.append("<li class='ui-autocomplete-category'>" + item.category + "</li>");
+                                    currentCategory = item.category;
+                                }
+                                li = that._renderItemData(ul, item);
+                                if (item.category) {
+                                    li.attr("aria-label", item.category + " : " + item.label);
+                                }
+                            });
+                        }
+                    });
 
-            /* Add a uncategorized autocomplete, if needed. */
-            if(set.autocomplete && set.categorized) {
+                    /* Sort the elements by category, so that grouping occurs. */
+                    autoNames.sort(function (a, b) {
+                        if (a.category === undefined | b.category === undefined) return 0;
+                        return a.category.toString().localeCompare(b.category.toString());
+                    });
 
-                /* Make the standard auto-complete have categories, as given on the Jquery UI website. */
-                $.widget("custom.catcomplete", $.ui.autocomplete, {
-                    _create: function () {
-                        this._super();
-                        this.widget().menu("option", "items", "> :not(.ui-autocomplete-category)");
-                    },
-                    _renderMenu: function (ul, items) {
-                        var that = this,
-                            currentCategory = "";
-                        $.each(items, function (index, item) {
-                            var li;
-                            if (item.category != currentCategory) {
-                                ul.append("<li class='ui-autocomplete-category'>" + item.category + "</li>");
-                                currentCategory = item.category;
-                            }
-                            li = that._renderItemData(ul, item);
-                            if (item.category) {
-                                li.attr("aria-label", item.category + " : " + item.label);
-                            }
-                        });
-                    }
-                });
-
-                /* Convert the Tipue Json into a Jquery Json. */
-                var autoNames = toJqueryUiJson();
-
-                /* Sort the elements by category, so that grouping occurs. */
-                autoNames.sort(function (a, b) {
-                    if (a.category === undefined | b.category === undefined) return 0;
-                    return a.category.toString().localeCompare(b.category.toString());
-                });
-
-                /* Add the auto-completion to the tipue_search_input. */
-                $("#tipue_search_input").catcomplete({
-                    delay: 0,
-                    source: autoNames,
-                    minLength: set.minimumLength,
-                    select: function (event, ui) {
-                        this.selectFromAuto = true;
-                        window.location.href = ui.item.url;
-                    }
-                });
+                    /* Add the auto-completion to the tipue_search_input. */
+                    $("#tipue_search_input").catcomplete({
+                        /* User specified parameters.*/
+                        delay: set.autocomplete.delay,
+                        autofocus: set.autocomplete.autofocus,
+                        minLength: set.autocomplete.minimumLength,
+                        position: set.autocomplete.position,
+                        /*Source and item URL given from Json input.*/
+                        source: autoNames,
+                        select: function (event, ui) {
+                            this.selectFromAuto = true;
+                            window.location.href = ui.item.url;
+                        }
+                    });
+                }
             }
 
             if (set.mode == 'live')
